@@ -17,6 +17,7 @@
   nav .in { max-width:1100px; margin:0 auto; padding:10px 20px; display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
   nav a { text-decoration:none; color:var(--ink); background:var(--card); border:1px solid var(--line);
           padding:6px 14px; border-radius:999px; font-size:14px; font-weight:600; }
+  nav a span.fc { font-size:11px; }
   nav a span { color:var(--muted); font-weight:500; margin-left:4px; }
   main { max-width:1100px; margin:0 auto; padding:8px 20px 60px; }
   section { margin-top:28px; }
@@ -42,6 +43,15 @@
   .anniv.a5 span { color:#1F9A9A; }
   .anniv span { font-size:11px; font-weight:700; letter-spacing:.04em; color:#A07A1C; white-space:nowrap; }
   .anniv + .row { border-top:0; }
+  .flt { font:inherit; color:inherit; background:none; border:1px solid transparent; border-radius:6px; padding:2px 6px; margin:-2px -4px; cursor:pointer; transition:opacity .15s, background .15s; }
+  .flt:hover { background:rgba(0,0,0,.04); }
+  .flt.on { background:#fff; border-color:#c9cfdc; box-shadow:0 1px 2px rgba(0,0,0,.06); }
+  .flt.off { opacity:.35; }
+  .legend .br { flex-basis:100%; height:0; }
+  .legend .lg { color:var(--muted); }
+  .legend .hint { font-size:12px; color:var(--muted); }
+  .reset { font:inherit; font-size:13px; font-weight:600; color:#C8102E; background:#fff; border:1px solid #f0c3cb; border-radius:999px; padding:6px 12px; cursor:pointer; }
+  .grid.empty { padding:16px; color:var(--muted); font-size:14px; }
   .row.sub { border-top:0; padding-top:0; }
   .no { color:var(--muted); font-variant-numeric:tabular-nums; font-size:12px; text-align:right; }
   .date { color:var(--muted); font-variant-numeric:tabular-nums; font-size:13px; }
@@ -391,45 +401,93 @@ function sortRows(a,b){
 }
 
 const main=document.getElementById("main"), nav=document.getElementById("nav");
-GROUPS.forEach(g=>{
-  const rows = RAW.filter(g.test).map((r,i)=>({...r,i})).sort((a,b)=>sortRows(a,b)||a.i-b.i);
-  nav.insertAdjacentHTML("beforeend",`<a href="#${g.id}">${g.title}<span>${rows.length}</span></a>`);
-  let html = `<section id="${g.id}"><h2>${g.title} <span style="color:var(--muted);font-weight:500;font-size:15px">(${rows.length}명)</span></h2><p class="desc">${g.desc}</p><div class="grid">`;
-  let prev="";
-  rows.forEach((r,idx)=>{
-    if (idx) for (let y=2022; y<=2030; y++) {
-      const a = `${y}-02-04`;
-      if (prev < a && r.d >= a) {
-        const n=y-2021, ord = n===1?"1st":n===2?"2nd":n===3?"3rd":`${n}th`;
-        html += `<div class="anniv${n===5?" a5":""}"><span>${ord} Anniversary · ${a}</span></div>`;
-      }
-    }
-    const [en,ko,col]=SCHOOLS[r.s];
-    const cls = r.d===prev ? "samedate" : (idx? "newdate":"");
-    const tag = r.c==="D" ? `<span class="tag">(배포)</span>` : "";
-    const note = NOTES[r.n] ? `<span class="tag">· ${NOTES[r.n]}</span>` : "";
-    const sub = SUB[r.n] ? `<span class="subtag" style="color:${SUBLBL[SUB[r.n]][1]}">${SUBLBL[SUB[r.n]][0]}</span>` : "";
-    const meta = (rl,at,df,cl) => {
-      const ico = `<img class="cls" src="${ICON[cl]}" alt="${CLSNAME[cl]}" title="${CLSNAME[cl]}">`;
-      const role = rl==="STRIKER" ? `<span class="role st">STRIKER</span>` : `<span class="role sp">SPECIAL</span>`;
-      const [ak,ac]=ATK[at], [dk,dc]=DEF[df];
-      return `<span class="meta">${ico}${role}<span class="badge" style="background:${ac}">${ak}</span><span class="badge" style="background:${dc}">${dk}</span></span>`;
-    };
-    html += `<div class="row ${cls}"><span class="no">${idx+1}</span><span class="date">${r.d}</span><span class="who"><span class="nm" style="color:${col}">${r.n}</span>${note}<span class="sch">${ko}</span>${sub}${tag}</span>${meta(r.role,r.atk,r.def,r.cls)}</div>`;
-    if (EXTRA[r.n]) html += `<div class="row sub"><span class="no"></span><span class="date"></span><span class="who"></span>${meta(...EXTRA[r.n])}</div>`;
-    prev=r.d;
-  });
-  main.insertAdjacentHTML("beforeend", html+"</div></section>");
-});
-nav.insertAdjacentHTML("beforeend",`<span style="color:var(--muted);font-size:13px;margin-left:auto">총 ${RAW.length}명</span>`);
+main.insertAdjacentHTML("beforeend",`<div id="lists"></div>`);
+const lists=document.getElementById("lists");
 
-document.getElementById("legend").innerHTML = Object.values(SCHOOLS)
-  .map(([en,ko,col])=>`<span><b style="color:${col}">■ ${ko}</b> <span style="color:var(--muted)">${en}</span></span>`).join("")
-  + `<span style="flex-basis:100%;height:0"></span>`
-  + `<span style="color:var(--muted)">공격</span>` + Object.values(ATK).map(([k,c])=>`<span class="badge" style="background:${c}">${k}</span>`).join("")
-  + `<span style="color:var(--muted);margin-left:10px">방어</span>` + Object.values(DEF).map(([k,c])=>`<span class="badge" style="background:${c}">${k}</span>`).join("")
-  + `<span style="flex-basis:100%;height:0"></span><span style="color:var(--muted)">역할</span>` + Object.entries(CLSNAME).map(([k,v])=>`<span style="display:inline-flex;align-items:center;gap:4px"><img class="cls" src="${ICON[k]}" alt="">${v}</span>`).join("")
-  + `<span style="flex-basis:100%;height:0"></span><span style="color:var(--muted)">하위 등급</span>` + Object.entries(SUBLBL).map(([k,[l,c]])=>`<span style="color:${c};font-weight:700">${l}</span><span style="color:var(--muted);margin-left:-8px">(${{A:"통상",E:"한정",R:"페스"}[k]})</span>`).join("");
+// 정렬 + 원래 순번 고정
+const SORTED = GROUPS.map(g => RAW.filter(g.test).map((r,i)=>({...r,i})).sort((a,b)=>sortRows(a,b)||a.i-b.i).map((r,idx)=>({...r,no:idx+1})));
+
+// 필터 상태: 같은 범주 안에서는 OR, 범주끼리는 AND
+const F = { s:new Set(), atk:new Set(), def:new Set(), cls:new Set(), sub:new Set() };
+const forms = r => [[r.role,r.atk,r.def,r.cls]].concat(EXTRA[r.n]?[EXTRA[r.n]]:[]);
+function pass(r){
+  if (F.s.size && !F.s.has(r.s)) return false;
+  if (F.sub.size && !F.sub.has(SUB[r.n])) return false;
+  const fs=forms(r);
+  if (F.atk.size && !fs.some(f=>F.atk.has(f[1]))) return false;
+  if (F.def.size && !fs.some(f=>F.def.has(f[2]))) return false;
+  if (F.cls.size && !fs.some(f=>F.cls.has(f[3]))) return false;
+  return true;
+}
+const anyFilter = () => Object.values(F).some(x=>x.size);
+
+const meta = (rl,at,df,cl) => {
+  const ico = `<img class="cls" src="${ICON[cl]}" alt="${CLSNAME[cl]}" title="${CLSNAME[cl]}">`;
+  const role = rl==="STRIKER" ? `<span class="role st">STRIKER</span>` : `<span class="role sp">SPECIAL</span>`;
+  const [ak,ac]=ATK[at], [dk,dc]=DEF[df];
+  return `<span class="meta">${ico}${role}<span class="badge" style="background:${ac}">${ak}</span><span class="badge" style="background:${dc}">${dk}</span></span>`;
+};
+
+function render(){
+  let total=0, navHtml="";
+  let out="";
+  GROUPS.forEach((g,gi)=>{
+    const all=SORTED[gi], rows=all.filter(pass);
+    total+=rows.length;
+    const cnt = anyFilter() ? `${rows.length} / ${all.length}명` : `${all.length}명`;
+    navHtml += `<a href="#${g.id}">${g.title}${anyFilter()? `<span class="fc">${rows.length}/${all.length}</span>` : `<span>${all.length}</span>`}</a>`;
+    let html = `<section id="${g.id}"><h2>${g.title} <span style="color:var(--muted);font-weight:500;font-size:15px">(${cnt})</span></h2><p class="desc">${g.desc}</p>`;
+    if (!rows.length) { out += html + `<div class="grid empty">조건에 맞는 학생이 없습니다.</div></section>`; return; }
+    html += `<div class="grid">`;
+    let prev="";
+    rows.forEach((r,idx)=>{
+      if (idx) for (let y=2022; y<=2030; y++) {
+        const a = `${y}-02-04`;
+        if (prev < a && r.d >= a) {
+          const n=y-2021, ord = n===1?"1st":n===2?"2nd":n===3?"3rd":`${n}th`;
+          html += `<div class="anniv${n===5?" a5":""}"><span>${ord} Anniversary · ${a}</span></div>`;
+        }
+      }
+      const [en,ko,col]=SCHOOLS[r.s];
+      const cls = r.d===prev ? "samedate" : (idx? "newdate":"");
+      const tag = r.c==="D" ? `<span class="tag">(배포)</span>` : "";
+      const note = NOTES[r.n] ? `<span class="tag">· ${NOTES[r.n]}</span>` : "";
+      const sub = SUB[r.n] ? `<span class="subtag" style="color:${SUBLBL[SUB[r.n]][1]}">${SUBLBL[SUB[r.n]][0]}</span>` : "";
+      html += `<div class="row ${cls}"><span class="no">${r.no}</span><span class="date">${r.d}</span><span class="who"><span class="nm" style="color:${col}">${r.n}</span>${note}<span class="sch">${ko}</span>${sub}${tag}</span>${meta(r.role,r.atk,r.def,r.cls)}</div>`;
+      if (EXTRA[r.n]) html += `<div class="row sub"><span class="no"></span><span class="date"></span><span class="who"></span>${meta(...EXTRA[r.n])}</div>`;
+      prev=r.d;
+    });
+    out += html+"</div></section>";
+  });
+  lists.innerHTML = out;
+  nav.innerHTML = navHtml
+    + (anyFilter()? `<button class="reset" id="reset">필터 초기화</button>` : "")
+    + `<span style="color:var(--muted);font-size:13px;margin-left:auto">${anyFilter()? `표시 ${total} / ` : ""}총 ${RAW.length}명</span>`;
+  const rb=document.getElementById("reset"); if (rb) rb.onclick=()=>{ Object.values(F).forEach(x=>x.clear()); render(); };
+  // 범례 선택 상태 표시
+  document.querySelectorAll("#legend .flt").forEach(el=>{
+    const set=F[el.dataset.g];
+    el.classList.toggle("on", set.has(el.dataset.k));
+    el.classList.toggle("off", set.size>0 && !set.has(el.dataset.k));
+  });
+}
+
+const chip = (g,k,inner) => `<button type="button" class="flt" data-g="${g}" data-k="${k}">${inner}</button>`;
+document.getElementById("legend").innerHTML =
+    Object.entries(SCHOOLS).map(([k,[en,ko,col]])=>chip("s",k,`<b style="color:${col}">■ ${ko}</b> <span style="color:var(--muted)">${en}</span>`)).join("")
+  + `<span class="br"></span>`
+  + `<span class="lg">공격</span>` + Object.entries(ATK).map(([k,[l,c]])=>chip("atk",k,`<span class="badge" style="background:${c}">${l}</span>`)).join("")
+  + `<span class="lg" style="margin-left:10px">방어</span>` + Object.entries(DEF).map(([k,[l,c]])=>chip("def",k,`<span class="badge" style="background:${c}">${l}</span>`)).join("")
+  + `<span class="br"></span><span class="lg">역할</span>` + Object.entries(CLSNAME).map(([k,v])=>chip("cls",k,`<span style="display:inline-flex;align-items:center;gap:4px"><img class="cls" src="${ICON[k]}" alt="">${v}</span>`)).join("")
+  + `<span class="br"></span><span class="lg">하위 등급</span>` + Object.entries(SUBLBL).map(([k,[l,c]])=>chip("sub",k,`<span style="color:${c};font-weight:700">${l}</span> <span style="color:var(--muted)">(${{A:"통상",E:"한정",R:"페스"}[k]})</span>`)).join("")
+  + `<span class="br"></span><span class="hint">범례를 누르면 해당 항목만 표시됩니다. 같은 줄의 항목은 여러 개 고를 수 있고(또는), 줄이 다른 조건은 함께 적용됩니다(그리고).</span>`;
+document.getElementById("legend").addEventListener("click", e=>{
+  const el=e.target.closest(".flt"); if(!el) return;
+  const set=F[el.dataset.g], k=el.dataset.k;
+  set.has(k) ? set.delete(k) : set.add(k);
+  render();
+});
+render();
 
 main.insertAdjacentHTML("beforeend",`<div class="note"><b>참고</b><ul>
 <li>날짜는 일본 서버에서 해당 학생이 처음 모집(또는 배포)된 날입니다. 서비스 개시일(2021-02-04)부터 있던 학생은 모두 2021-02-04로 표기했습니다.</li>
