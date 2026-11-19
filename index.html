@@ -24,7 +24,7 @@
   h2 { font-size:20px; margin:0 0 4px; }
   .desc { color:var(--muted); font-size:13px; margin:0 0 12px; }
   .grid { background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden; }
-  .row { display:grid; grid-template-columns:52px 110px 1fr 270px; gap:10px; align-items:baseline;
+  .row { display:grid; grid-template-columns:34px 52px 100px 1fr 270px; gap:10px; align-items:baseline;
          padding:7px 14px; border-top:1px solid var(--line); font-size:15px; }
   .row:first-child { border-top:0; }
   .row.newdate { border-top:1px solid #cfd4e0; }
@@ -52,6 +52,18 @@
   .legend .hint { font-size:12px; color:var(--muted); }
   .reset { font:inherit; font-size:13px; font-weight:600; color:#C8102E; background:#fff; border:1px solid #f0c3cb; border-radius:999px; padding:6px 12px; cursor:pointer; }
   .grid.empty { padding:16px; color:var(--muted); font-size:14px; }
+  .pick { cursor:pointer; transition:transform .1s, box-shadow .1s; }
+  .pick:hover { transform:translateY(-1px); }
+  .pick.armed { box-shadow:0 0 0 2px #fff, 0 0 0 4px #1d2330; border-radius:3px; }
+  .tip { position:absolute; z-index:20; max-width:calc(100vw - 16px); white-space:nowrap; background:#1d2330; color:#fff; font-size:12px; line-height:1.4; padding:6px 10px; border-radius:6px; box-shadow:0 4px 12px rgba(0,0,0,.18); pointer-events:none; opacity:0; transition:opacity .12s; }
+  .tip.show { opacity:1; }
+  .flt.ex { opacity:.45 !important; }
+  .flt.ex, .flt.ex * { text-decoration:line-through; text-decoration-thickness:2px; }
+  .flt.ex .badge, .flt.ex img { filter:grayscale(1); }
+  .stars { display:inline-flex; gap:1px; vertical-align:middle; }
+  .stars img { width:14px; height:14px; object-fit:contain; }
+  .rar { justify-self:start; line-height:0; }
+  .rar.pick { border-radius:3px; padding:1px; }
   .row.sub { border-top:0; padding-top:0; }
   .no { color:var(--muted); font-variant-numeric:tabular-nums; font-size:12px; text-align:right; }
   .date { color:var(--muted); font-variant-numeric:tabular-nums; font-size:13px; }
@@ -64,7 +76,7 @@
   .note { margin-top:18px; font-size:12.5px; color:var(--muted); background:var(--card); border:1px solid var(--line);
           border-radius:10px; padding:12px 14px; }
   .note li { margin:2px 0; }
-  @media (max-width:760px){ .row{ grid-template-columns:34px 86px 1fr; gap:4px 6px; padding:7px 10px; font-size:14px;} .meta{grid-column:3; } .role{width:auto;font-size:10px;margin-right:2px;} .cls{width:16px;height:16px;} .sch{font-size:11px;margin-left:5px;} }
+  @media (max-width:760px){ .row{ grid-template-columns:22px 34px 80px 1fr; gap:4px 5px; padding:7px 10px; font-size:14px;} .date{white-space:nowrap;font-size:12px;letter-spacing:-.02em;} .meta{grid-column:4;} .role{width:auto;font-size:10px;margin-right:2px;} .cls{width:16px;height:16px;} .stars img{width:10px;height:10px;} .sch{font-size:11px;margin-left:5px;} }
 </style>
 </head>
 <body>
@@ -383,6 +395,10 @@ const DEF = {"軽装備":["경장갑","#C7262E"],"重装甲":["중장갑","#C98A
 const ICON = {"A": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAACe0lEQVR42u1av2tUQRD+ZqsTzi6NksIzh8ZgJGhjYaWNIdXpFSksAsYuYAQ7D20sLQT/LQsLQRALLRSsA3LVjM2eLOe7/Tn75D1vYTjeze7Mfm93Zmd2HokItBsReYWKCGnrNOhJax2IiMw6A0REDjzsb11akc8e3scaCqmGsfsMvoahr419RRsC2ANw4nO/lnds+6oapgY9AiA5JCLHGnMoFXA/F0ADoEnJXLKNPXR65zZmPg/g1+JxhW4VG7lYCwQAGGPOiGijtrFvENH32h6IiH6mgknZWkMiOmvTpTIzqW8tDRAi8ixxm4m2+70X632Y+YYzbup4panz//UEeRNmhkvZ7jfSfT5uGDt2+OMG/iRSNi1RFpDDCEU3V4wdOH0GK/pMIuQfFQPJXIm/xvv6MPNR4qokA9mOUBCS8TwCCEXoGfmAmIbAb+A8TwOO4laEP3kTE7oz806gy4HXq1rEEJGnNiH6Yqm1S4SFHGMMB/otXvwIwG0AIyJ6/YefGeS9VIqcISKblmYFgWdRxPpQRC4pATksjKB1wnAL7EXC5F9p6u5NqrveWsrGvqBsY++P+116I8OlmGiWGWMlETMTM18L6DrxneyhxGqbiD4Vrsqp/X3rkxGxGpcBfHXsOi0f6UvQ2J8wvjCx2nL4W/86sYKI3E1ITXc1U10ReaB606gUwpxmjNG/aax5MVd6TplEwTstgjhXu9BzgYh+tARiXr1iVWubLa3EvHqhx7rBfUUA+9Ym5g79f4UezWLoEMAYwB0iehd4eU8AvAfwYV3VXVd109oVD2+vS0Cu+oDU2M61gOx6eJud+YQjdFgyMzWVzzpn7NogAOA3FmCqscD4kXwAAAAASUVORK5CYII=", "S": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADMAAAAvCAYAAABOtfLKAAAC2klEQVR42tWZvWsUQRjGf+8ZYjQHRkxQzEk8PEPEoAmiphBMQoogaGUjWKRIrPwgvb1/gZWdf4mNhWApanUEjB8BQQuViJrHZg82x97u3OzN3u3AC8fuOzPvc8/7NbMmiYLGKPAz5AaVgoAcA6ZCbzJUEJgVYBJ4G3ITK8LNzEwAkg4Bu2V3s3jclDpmVmO/75TazVou1hqSrKzMzCY8u15KZtpZCc1OSGYaKe9mSsVMJ1ZCshOKmWUHnYdlYKZuZk0XRUmXgdcDCybLvRIAjQG/gD8D5WbdAonmfAeODlLM1H2AxADtAPW87U4vwCy7xkgGoCZws18xM2VmWyFSoW9i8GVmArgasOAu9CWb5YmVDqzUga2+xIwkk3SjB+vcirqCrUGoM5Nmtu0JZAl4MUh15qOkM/0CEqI3a0qa7wLIRq+AhOya183smUu89Tqn+0hN0l1A7dLSSXrnoidpTVJDUrVbu7pRvp1lYJuhcynv110AR7qrrsCyFC66AkgwtuoLNmXerA+YSz4g2jauSVpIeD7nykrK2o0ku+MJYAQYM7PPPrG3t7e3YWafgB3gG9BMuWqaAGYkTQCjlUrluW/BTkoAhyUd7+KfWewi1taTAj9FjkS1x9WWk3E3M0njDpPmJI14ZL6p2BrTHvOXHGw733KzYTP7nUHncJ5jbezi3HwLu5n9y3K5IeCeA5C8tew+cDDnGgcyAG1aRBUhmQGmo6B/GYoZACcwEaB54D0Bv690GFfM7JUzgx55ftGzDXKRqqQFSY+7tcuZGccO+EskX4EfkezG6lgV+AuMR3Ki9dvMnvSia54xs3eUfEi6YJJ6fo7vExirhP6aVRSQfSfNqBN4VDIQa/uISMgmjbwdcxGSdIBLS5ErAwriWiebXe4Aamb2YQBc6lxUtHPdzmxH8WSSTkl6UJDxDySdbe2dBSTv7cwIUANOA9Nm9jSH4ZuRsW+Abd91/gO9lIAgn2ZapQAAAABJRU5ErkJggg==", "H": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAC0AAAArCAYAAADsQwGHAAACSElEQVR42u2ZvYoUQRSFzylHMREMRGSdSFEWQRkwEE0Ef1DEQNDVwNTIVR9AHHwMA3MDH8HAJzDbjTXYxUnMjFS2joHVS9tUdVd339FumIJi+qc49+vb996qroEkNPSppGcAVO3e+4ve+0nRM7QgaV3Sq5iepNfhfq1G3c1ZTDgB/zQDepqrFx6gNfSTNgYyDN3uqHc/C7qLeMXQ1Yrm3EAzDd1XPAI+N9SMQs+sDAQjc2O9owUrg4dB8s/BgJskAoAL51OMo63vQ5PcGQn03cLllgm4mSh5m5YJ6QCcxbjaMQfg2sig7zmSbwwF9xLXvZUBkm8dRthW0CvourgO9S93Gr0Sfn8mkmQB4Gvk1gkAxwEcrEmwT8uCPhwOf5h7r8XaZxXT/wxa0p0xAUu6SUnZ8TSEmJZE61XeDUlHIqu8y9arPEi6YPTqzgD4Hrk+M9I/BeDQJJxvjSSkv/xVPay8vezvw2rJ25L0eKDAt+rq9LuBOvpD7eRSfg1DC4uiTUprkPJAR9J3qLXfYo4gaQYMYH+zhgkI38HQw4jOeyvgRmgA+h87T00h6nIEqtm7RNgXWTkVplkmenkqPme5oRiZnh9k/pPQHB59FustPHwawOfshC92TXNji+QBkr8MgV2Os3p9BEjak+QkPeoJ+zIBbO/pSt1dI7nbAfg6gI9twtISunU9l7QGYBGb1JYWHqm4lLTRMGYjOGHR+yvHwtOl8SedczuR6+cBbCe2MGw9TVKxnqq1JHdDfX8eYC+FB9+ugYv12vYbEeO12UD7C4IAAAAASUVORK5CYII=", "K": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACMAAAAqCAYAAAA51uKRAAABt0lEQVR42u1YPUsDQRB9bzUSUDsDKZLGDxArSxErjZ2lYCliGsFUlgr+EH+anaYzhY0pgu6zWcMa7y73sZdEuIGB+9iZfTfzbndnKAlFhaQk8ec2akzcPCTHL0wIIO6yW9RXUTBdD9QTgP1C3iTl1S4ATaqkjiROqrU2Un2fzMGZbZLPKT7SZOaMu7kGsAugnuC/Q1JpgLhJLEkL4CRhzBKALQA3JEUX3oUQgwWSCkzpYCTdFV5AQxHYWrsKAMaYj7lHhuSQ5NBb6M5yRTiEZly9L6N8VH9TBea/gPmqIhMjn4sE5n2RwDRL3Zu8UiVLRVER2Jej0o8QadMUlyIAMJJ6M4zKQcLH9CCpNaMjxNoU+5YB0J83V5z0IWld0mnAyNSidIrt8a/yNolYGQlciyDtKI2t8R7slZGbFEA247oQ9yHTlMLmwp//D+sDgXlIaVNPBCOpkRPMY8bx9UkwYwL7/ROSGyTfyvrH41brSDAAlgGsFKkO82wbJuEkNnJtrttAIM6n7V9xkfFTBgBtki8FgDQADEIdIV5d/XyYEcSOi8YgU7fTWhupMZteW9JVQrezmaeD+g0WEroffyQeQQAAAABJRU5ErkJggg==", "T": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADYAAAAsCAYAAAAuCEsgAAADjElEQVR42tVaTWsUQRB9Ndl8SEyMCJpDUARRUCIr5OInK0HNKaeIoEbQ5CLxEnJRzN0fIZ68+Re8iAc9Gjyo+BVQDwEvUdfEJKSel04YJ9Oz3TM9m7WhYJnuru43Vf26qmZBEgFlGgDThOTdwGtlipBEoHZQRD5nDSB5AMAXNKFFgfR0ADjiMG4QQHszgPlYrBvAbxswEVlxUUKyA8BajjWCWqwHwH4RoYjUAYwm+kdN34rzmxRZFRECOJnomhaRuunbB6APQGduZA0O4YCFCCZsJOErJMcszwdI9pRBHodE5AO2sZHsB/ALwFIoV9y73aCM2y4A6M81V1UTuqQiIqtooUayk+SacdP4Zp0tJgAqaL1WMXvL7YpKcpnkzVZBpKoTJJcAaBFX3DSxod08bnMPwEcAi+ZRnyGiBzmBVQCsW85g5sQtYijzuidtjzjQ8IiPTlW9qqptaXuM7TNVrBM8AE3luGemPMDlA2bpOOsIqlYgAj/nuMZgHv3pD92tVTS9mI3pmk2AGCQ5nnedZORRBTAkIg8dSEICEd8sgOdGbBkBDSH98Y0VJz2JotbMpDG3K+YIXMva0LjDGt2xMdcyXdH3zgrohvE7iSnrHN/4CaAOoC4i31PGHQbwDcByPFTxvYDHSggwZixgXzu+lPfJl52nNLBYArCXBYPk8yFqHislAHtRcP6zEMD24D9oEYA2zznVZhBH4fmq2q6qXT51jMAUfypQ7aSWFVL1qOoFByWn4/NyBKldRq6EKgrFwO1KC6kiAN0i8tPnLrMVhGz5ko/rxdfxmbclgzZVIZd2qwm1DskbGEQWhRcdDuwjAJdLBHXH8nyySPntqSMbPQFwuyX5PuOAz3im8TVV7XUhjyLs6zrXVszpcSEQy4u6D+AtgK8k1wEcA9AF4NNGhGBIwCn3U9W2DRISkfUGaw8DmAcwnwYsiqJovaRS2lEA7+LsVvRytpFL8oxFItJdWpgTRW+SkQvJE4FADTeqK5ZmsRRAc6Gs5pK2KMneJvDWUKjENW1+lDG4GeDKi+5NOfsfIVk3stsC+kaAtRcA7AyUMVS98jGSP0juSDH7Y5JC8lKBzcyZOsYAgDOh3Drz43rCZyvmgLcj48uiKwFYzlPq19MUxpyzFH02iSgz8lBViUlkpK1BXjXpEElMuurIrBk66HOxmKtVqiLyypXisR3/88gJrGF/GfVIW/sLzUAPNc5NQS8AAAAASUVORK5CYII="};
 const CLSNAME = {A:"딜러",S:"서포터",H:"힐러",K:"탱커",T:"T.S."};
 const SUB = {"시로코": "A", "호시노": "A", "시로코(라이딩)": "A", "세리카": "A", "아루": "A", "이오리": "A", "이즈미": "A", "하루나": "A", "히나": "A", "아코": "A", "치나츠(온천)": "A", "세나": "A", "네루": "A", "마키": "A", "스미레": "A", "에이미": "A", "카린": "A", "히비키": "A", "아리스": "A", "미도리": "A", "유즈": "A", "아스나(바니걸)": "A", "치히로": "A", "츠루기": "A", "히후미": "A", "마시로": "A", "아즈사": "A", "코하루": "A", "히후미(수영복)": "A", "나츠": "A", "이즈나": "A", "히나(수영복)": "E", "이오리(수영복)": "E", "아루(새해)": "E", "무츠키(새해)": "E", "카린(바니걸)": "E", "네루(바니걸)": "E", "아즈사(수영복)": "E", "마시로(수영복)": "E", "치세(수영복)": "E", "이즈나(수영복)": "E", "호시노(수영복)": "R", "히나(드레스)": "R", "미카": "R", "하나코(수영복)": "R", "와카모": "R"};
+const RARE = {"아야네(수영복)": 1, "주리": 1, "치나츠": 1, "하루카": 1, "이즈미(수영복)": 1, "준코(새해)": 1, "이부키": 1, "치아키(수영복)": 1, "아스나": 1, "코타마": 1, "코토리": 1, "히비키(응원단)": 1, "유즈(메이드)": 1, "카린(교복)": 1, "토키(임전)": 1, "세리나": 1, "스즈미": 1, "시미코": 1, "요시미": 1, "츠루기(수영복)": 1, "하스미(체육복)": 1, "코하루(수영복)": 1, "아이리(밴드)": 1, "미네(아이돌)": 1, "이치카(수영복)": 1, "라브": 1, "피나": 1, "미치루": 1, "시즈코(수영복)": 1, "노도카": 1, "토모에": 1, "라나": 1, "후부키": 1, "키리노(수영복)": 1, "미유(수영복)": 1, "오토기": 1, "아츠코(수영복)": 1, "아오바": 1, "사텐 루이코": 1, "노노미": 2, "세리카": 2, "아야네": 2, "무츠키": 2, "아카리": 2, "준코": 2, "카요코": 2, "후우카": 2, "아카네": 2, "우타하": 2, "유우카": 2, "하레": 2, "모모이": 2, "아이리": 2, "하나에": 2, "하스미": 2, "하나코": 2, "마리": 2, "츠바키": 2, "치세": 2, "시즈코": 2, "렌게(수영복)": 2, "모미지": 2, "키리노": 2};  // 표기 없는 학생은 3성
+const rar = r => RARE[r.n]||3;
+const STAR = "data:image/png;base64,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";
+const stars = n => `<span class="stars">${Array(n).fill(`<img src="${STAR}" alt="">`).join("")}</span>`;
 const SUBLBL = {A:["아카이브","#14B89A"],E:["앙코르","#E3A21A"],R:["리콜렉트","#A35BD6"]};
 const EXTRA = { "호시노(임전)":["STRIKER","神秘","重装甲","A"], "슌(수영복)":["STRIKER","振動","軽装備","A"] };
 const NOTES = { "슌(수영복)":"슌/슈에린 형태 전환", "호시노(임전)":"탱커/어태커 형태 전환" };
@@ -408,24 +424,28 @@ const lists=document.getElementById("lists");
 const SORTED = GROUPS.map(g => RAW.filter(g.test).map((r,i)=>({...r,i})).sort((a,b)=>sortRows(a,b)||a.i-b.i).map((r,idx)=>({...r,no:idx+1})));
 
 // 필터 상태: 같은 범주 안에서는 OR, 범주끼리는 AND
-const F = { s:new Set(), atk:new Set(), def:new Set(), cls:new Set(), sub:new Set() };
+const F = { r:new Set(), s:new Set(), atk:new Set(), def:new Set(), cls:new Set(), sub:new Set() };
+const X = { r:new Set(), atk:new Set(), def:new Set(), cls:new Set() };  // 목록에서 두 번 눌러 제외한 값
 const forms = r => [[r.role,r.atk,r.def,r.cls]].concat(EXTRA[r.n]?[EXTRA[r.n]]:[]);
 function pass(r){
+  if (F.r.size && !F.r.has(String(rar(r)))) return false;
+  if (X.r.has(String(rar(r)))) return false;
   if (F.s.size && !F.s.has(r.s)) return false;
   if (F.sub.size && !F.sub.has(SUB[r.n])) return false;
   const fs=forms(r);
   if (F.atk.size && !fs.some(f=>F.atk.has(f[1]))) return false;
   if (F.def.size && !fs.some(f=>F.def.has(f[2]))) return false;
   if (F.cls.size && !fs.some(f=>F.cls.has(f[3]))) return false;
+  if (fs.some(f=>X.atk.has(f[1])||X.def.has(f[2])||X.cls.has(f[3]))) return false;
   return true;
 }
-const anyFilter = () => Object.values(F).some(x=>x.size);
+const anyFilter = () => Object.values(F).some(x=>x.size) || Object.values(X).some(x=>x.size);
 
 const meta = (rl,at,df,cl) => {
-  const ico = `<img class="cls" src="${ICON[cl]}" alt="${CLSNAME[cl]}" title="${CLSNAME[cl]}">`;
+  const ico = `<img class="cls pick" data-g="cls" data-k="${cl}" src="${ICON[cl]}" alt="${CLSNAME[cl]}">`;
   const role = rl==="STRIKER" ? `<span class="role st">STRIKER</span>` : `<span class="role sp">SPECIAL</span>`;
   const [ak,ac]=ATK[at], [dk,dc]=DEF[df];
-  return `<span class="meta">${ico}${role}<span class="badge" style="background:${ac}">${ak}</span><span class="badge" style="background:${dc}">${dk}</span></span>`;
+  return `<span class="meta">${ico}${role}<span class="badge pick" data-g="atk" data-k="${at}" style="background:${ac}">${ak}</span><span class="badge pick" data-g="def" data-k="${df}" style="background:${dc}">${dk}</span></span>`;
 };
 
 function render(){
@@ -453,8 +473,8 @@ function render(){
       const tag = r.c==="D" ? `<span class="tag">(배포)</span>` : "";
       const note = NOTES[r.n] ? `<span class="tag">· ${NOTES[r.n]}</span>` : "";
       const sub = SUB[r.n] ? `<span class="subtag" style="color:${SUBLBL[SUB[r.n]][1]}">${SUBLBL[SUB[r.n]][0]}</span>` : "";
-      html += `<div class="row ${cls}"><span class="no">${r.no}</span><span class="date">${r.d}</span><span class="who"><span class="nm" style="color:${col}">${r.n}</span>${note}<span class="sch">${ko}</span>${sub}${tag}</span>${meta(r.role,r.atk,r.def,r.cls)}</div>`;
-      if (EXTRA[r.n]) html += `<div class="row sub"><span class="no"></span><span class="date"></span><span class="who"></span>${meta(...EXTRA[r.n])}</div>`;
+      html += `<div class="row ${cls}"><span class="no">${r.no}</span><span class="rar pick" data-g="r" data-k="${rar(r)}">${stars(rar(r))}</span><span class="date">${r.d}</span><span class="who"><span class="nm" style="color:${col}">${r.n}</span>${note}<span class="sch">${ko}</span>${sub}${tag}</span>${meta(r.role,r.atk,r.def,r.cls)}</div>`;
+      if (EXTRA[r.n]) html += `<div class="row sub"><span class="no"></span><span class="rar"></span><span class="date"></span><span class="who"></span>${meta(...EXTRA[r.n])}</div>`;
       prev=r.d;
     });
     out += html+"</div></section>";
@@ -463,12 +483,13 @@ function render(){
   nav.innerHTML = navHtml
     + (anyFilter()? `<button class="reset" id="reset">필터 초기화</button>` : "")
     + `<span style="color:var(--muted);font-size:13px;margin-left:auto">${anyFilter()? `표시 ${total} / ` : ""}총 ${RAW.length}명</span>`;
-  const rb=document.getElementById("reset"); if (rb) rb.onclick=()=>{ Object.values(F).forEach(x=>x.clear()); render(); };
+  const rb=document.getElementById("reset"); if (rb) rb.onclick=()=>{ Object.values(F).forEach(x=>x.clear()); Object.values(X).forEach(x=>x.clear()); render(); };
   // 범례 선택 상태 표시
   document.querySelectorAll("#legend .flt").forEach(el=>{
-    const set=F[el.dataset.g];
+    const set=F[el.dataset.g], ex=X[el.dataset.g]&&X[el.dataset.g].has(el.dataset.k);
+    el.classList.toggle("ex", !!ex);
     el.classList.toggle("on", set.has(el.dataset.k));
-    el.classList.toggle("off", set.size>0 && !set.has(el.dataset.k));
+    el.classList.toggle("off", !ex && set.size>0 && !set.has(el.dataset.k));
   });
 }
 
@@ -479,14 +500,37 @@ document.getElementById("legend").innerHTML =
   + `<span class="lg">공격</span>` + Object.entries(ATK).map(([k,[l,c]])=>chip("atk",k,`<span class="badge" style="background:${c}">${l}</span>`)).join("")
   + `<span class="lg" style="margin-left:10px">방어</span>` + Object.entries(DEF).map(([k,[l,c]])=>chip("def",k,`<span class="badge" style="background:${c}">${l}</span>`)).join("")
   + `<span class="br"></span><span class="lg">역할</span>` + Object.entries(CLSNAME).map(([k,v])=>chip("cls",k,`<span style="display:inline-flex;align-items:center;gap:4px"><img class="cls" src="${ICON[k]}" alt="">${v}</span>`)).join("")
+  + `<span class="br"></span><span class="lg">레어도</span>` + [1,2,3].map(n=>chip("r",String(n),`${stars(n)} <span style="color:var(--muted)">${n}성</span>`)).join("")
   + `<span class="br"></span><span class="lg">하위 등급</span>` + Object.entries(SUBLBL).map(([k,[l,c]])=>chip("sub",k,`<span style="color:${c};font-weight:700">${l}</span> <span style="color:var(--muted)">(${{A:"통상",E:"한정",R:"페스"}[k]})</span>`)).join("")
-  + `<span class="br"></span><span class="hint">범례를 누르면 해당 항목만 표시됩니다. 같은 줄의 항목은 여러 개 고를 수 있고(또는), 줄이 다른 조건은 함께 적용됩니다(그리고).</span>`;
+  + `<span class="br"></span><span class="hint">범례를 누르면 해당 항목만 필터링됩니다. 목록의 별·공격/방어 타입·역할 아이콘을 두 번 누르면 그 값을 가진 학생이 목록에서 빠지고, 범례에 취소선이 표시됩니다(취소선 항목을 누르면 되돌아옵니다).</span>`;
 document.getElementById("legend").addEventListener("click", e=>{
   const el=e.target.closest(".flt"); if(!el) return;
   const set=F[el.dataset.g], k=el.dataset.k;
+  if (X[el.dataset.g] && X[el.dataset.g].has(k)) { X[el.dataset.g].delete(k); render(); return; }
   set.has(k) ? set.delete(k) : set.add(k);
   render();
 });
+// 목록 안 타입/역할: 1번 클릭 → 경고, 같은 레이어를 1번 더 클릭 → 필터 적용
+const WARN = { r:"이 레이어를 한번 더 누르면 해당 성급이 필터링됩니다", atk:"이 레이어를 한번 더 누르면 해당 공격타입이 필터링됩니다", def:"이 레이어를 한번 더 누르면 해당 방어타입이 필터링됩니다", cls:"이 레이어를 한번 더 누르면 해당 역할이 필터링됩니다" };
+const tip=document.createElement("div"); tip.className="tip"; document.body.appendChild(tip);
+let armed=null, tipTimer=null;
+function hideTip(){ tip.classList.remove("show"); if(armed) armed.classList.remove("armed"); armed=null; clearTimeout(tipTimer); }
+lists.addEventListener("click", e=>{
+  const el=e.target.closest(".pick"); if(!el) return;
+  e.stopPropagation();
+  if (armed===el) { const g=el.dataset.g,k=el.dataset.k; X[g].add(k); F[g].delete(k); hideTip(); render(); return; }
+  hideTip();
+  armed=el; el.classList.add("armed");
+  tip.textContent=WARN[el.dataset.g];
+  const r=el.getBoundingClientRect();
+  tip.classList.add("show");
+  const w=tip.offsetWidth;
+  let x=r.left+r.width/2-w/2; x=Math.max(8,Math.min(x,window.innerWidth-w-8));
+  tip.style.left=(x+window.scrollX)+"px"; tip.style.top=(r.top+window.scrollY-tip.offsetHeight-8)+"px";
+  tipTimer=setTimeout(hideTip,4000);
+});
+document.addEventListener("click", e=>{ if(!e.target.closest(".pick")) hideTip(); });
+window.addEventListener("scroll", ()=>{ if(armed) hideTip(); }, {passive:true});
 render();
 
 main.insertAdjacentHTML("beforeend",`<div class="note"><b>참고</b><ul>
