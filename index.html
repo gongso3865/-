@@ -62,7 +62,7 @@
   .flt.ex .badge, .flt.ex img { filter:grayscale(1); }
   .stars { display:inline-flex; gap:1px; vertical-align:middle; }
   .stars img { width:14px; height:14px; object-fit:contain; }
-  .rar { justify-self:start; line-height:0; }
+  .rar { justify-self:center; line-height:0; }
   .rar.pick { border-radius:3px; padding:1px; }
   .row.sub { border-top:0; padding-top:0; }
   .no { color:var(--muted); font-variant-numeric:tabular-nums; font-size:12px; text-align:right; }
@@ -424,8 +424,8 @@ const lists=document.getElementById("lists");
 const SORTED = GROUPS.map(g => RAW.filter(g.test).map((r,i)=>({...r,i})).sort((a,b)=>sortRows(a,b)||a.i-b.i).map((r,idx)=>({...r,no:idx+1})));
 
 // 필터 상태: 같은 범주 안에서는 OR, 범주끼리는 AND
-const F = { r:new Set(), s:new Set(), atk:new Set(), def:new Set(), cls:new Set(), sub:new Set() };
-const X = { r:new Set(), atk:new Set(), def:new Set(), cls:new Set() };  // 목록에서 두 번 눌러 제외한 값
+const F = { pos:new Set(), r:new Set(), s:new Set(), atk:new Set(), def:new Set(), cls:new Set(), sub:new Set() };
+const X = { pos:new Set(), r:new Set(), atk:new Set(), def:new Set(), cls:new Set() };  // 목록에서 두 번 눌러 제외한 값
 const forms = r => [[r.role,r.atk,r.def,r.cls]].concat(EXTRA[r.n]?[EXTRA[r.n]]:[]);
 function pass(r){
   if (F.r.size && !F.r.has(String(rar(r)))) return false;
@@ -433,17 +433,18 @@ function pass(r){
   if (F.s.size && !F.s.has(r.s)) return false;
   if (F.sub.size && !F.sub.has(SUB[r.n])) return false;
   const fs=forms(r);
+  if (F.pos.size && !fs.some(f=>F.pos.has(f[0]))) return false;
   if (F.atk.size && !fs.some(f=>F.atk.has(f[1]))) return false;
   if (F.def.size && !fs.some(f=>F.def.has(f[2]))) return false;
   if (F.cls.size && !fs.some(f=>F.cls.has(f[3]))) return false;
-  if (fs.some(f=>X.atk.has(f[1])||X.def.has(f[2])||X.cls.has(f[3]))) return false;
+  if (fs.some(f=>X.pos.has(f[0])||X.atk.has(f[1])||X.def.has(f[2])||X.cls.has(f[3]))) return false;
   return true;
 }
 const anyFilter = () => Object.values(F).some(x=>x.size) || Object.values(X).some(x=>x.size);
 
 const meta = (rl,at,df,cl) => {
   const ico = `<img class="cls pick" data-g="cls" data-k="${cl}" src="${ICON[cl]}" alt="${CLSNAME[cl]}">`;
-  const role = rl==="STRIKER" ? `<span class="role st">STRIKER</span>` : `<span class="role sp">SPECIAL</span>`;
+  const role = `<span class="role ${rl==="STRIKER"?"st":"sp"} pick" data-g="pos" data-k="${rl}">${rl}</span>`;
   const [ak,ac]=ATK[at], [dk,dc]=DEF[df];
   return `<span class="meta">${ico}${role}<span class="badge pick" data-g="atk" data-k="${at}" style="background:${ac}">${ak}</span><span class="badge pick" data-g="def" data-k="${df}" style="background:${dc}">${dk}</span></span>`;
 };
@@ -500,9 +501,10 @@ document.getElementById("legend").innerHTML =
   + `<span class="lg">공격</span>` + Object.entries(ATK).map(([k,[l,c]])=>chip("atk",k,`<span class="badge" style="background:${c}">${l}</span>`)).join("")
   + `<span class="lg" style="margin-left:10px">방어</span>` + Object.entries(DEF).map(([k,[l,c]])=>chip("def",k,`<span class="badge" style="background:${c}">${l}</span>`)).join("")
   + `<span class="br"></span><span class="lg">역할</span>` + Object.entries(CLSNAME).map(([k,v])=>chip("cls",k,`<span style="display:inline-flex;align-items:center;gap:4px"><img class="cls" src="${ICON[k]}" alt="">${v}</span>`)).join("")
+  + `<span class="lg" style="margin-left:18px">포지션</span>` + ["STRIKER","SPECIAL"].map(k=>chip("pos",k,`<span class="role ${k==="STRIKER"?"st":"sp"}" style="width:auto">${k}</span>`)).join("")
   + `<span class="br"></span><span class="lg">레어도</span>` + [1,2,3].map(n=>chip("r",String(n),`${stars(n)} <span style="color:var(--muted)">${n}성</span>`)).join("")
   + `<span class="br"></span><span class="lg">하위 등급</span>` + Object.entries(SUBLBL).map(([k,[l,c]])=>chip("sub",k,`<span style="color:${c};font-weight:700">${l}</span> <span style="color:var(--muted)">(${{A:"통상",E:"한정",R:"페스"}[k]})</span>`)).join("")
-  + `<span class="br"></span><span class="hint">범례를 누르면 해당 항목만 필터링됩니다. 목록의 별·공격/방어 타입·역할 아이콘을 두 번 누르면 그 값을 가진 학생이 목록에서 빠지고, 범례에 취소선이 표시됩니다(취소선 항목을 누르면 되돌아옵니다).</span>`;
+  + `<span class="br"></span><span class="hint">범례를 누르면 해당 항목만 필터링됩니다. 목록의 별·역할 아이콘·STRIKER/SPECIAL·공격/방어 타입을 두 번 누르면 그 값을 가진 학생이 목록에서 빠지고, 범례에 취소선이 표시됩니다(취소선 항목을 누르면 되돌아옵니다).</span>`;
 document.getElementById("legend").addEventListener("click", e=>{
   const el=e.target.closest(".flt"); if(!el) return;
   const set=F[el.dataset.g], k=el.dataset.k;
@@ -511,7 +513,7 @@ document.getElementById("legend").addEventListener("click", e=>{
   render();
 });
 // 목록 안 타입/역할: 1번 클릭 → 경고, 같은 레이어를 1번 더 클릭 → 필터 적용
-const WARN = { r:"이 레이어를 한번 더 누르면 해당 성급이 필터링됩니다", atk:"이 레이어를 한번 더 누르면 해당 공격타입이 필터링됩니다", def:"이 레이어를 한번 더 누르면 해당 방어타입이 필터링됩니다", cls:"이 레이어를 한번 더 누르면 해당 역할이 필터링됩니다" };
+const WARN = { pos:"이 레이어를 한번 더 누르면 해당 전후열이 필터링됩니다", r:"이 레이어를 한번 더 누르면 해당 성급이 필터링됩니다", atk:"이 레이어를 한번 더 누르면 해당 공격타입이 필터링됩니다", def:"이 레이어를 한번 더 누르면 해당 방어타입이 필터링됩니다", cls:"이 레이어를 한번 더 누르면 해당 역할이 필터링됩니다" };
 const tip=document.createElement("div"); tip.className="tip"; document.body.appendChild(tip);
 let armed=null, tipTimer=null;
 function hideTip(){ tip.classList.remove("show"); if(armed) armed.classList.remove("armed"); armed=null; clearTimeout(tipTimer); }
